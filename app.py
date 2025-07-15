@@ -47,11 +47,17 @@ def predict():
 
 # Helper: Extract topics using LDA
 def extract_topics_lda(feedbacks, n_topics=5, n_top_words=7):
-    vectorizer = CountVectorizer(stop_words='english', max_df=0.95, min_df=2)
+    vectorizer = CountVectorizer(
+        stop_words='english', 
+        max_df=0.95, 
+        min_df=1,  # Allow words that appear only once
+        lowercase=True
+    )
     dtm = vectorizer.fit_transform(feedbacks)
 
+    # Dynamically adjust topic count for small datasets
     if dtm.shape[0] < n_topics:
-        n_topics = max(1, dtm.shape[0])  # Adjust for small datasets
+        n_topics = max(1, dtm.shape[0])
 
     lda = LatentDirichletAllocation(n_components=n_topics, random_state=42)
     lda.fit(dtm)
@@ -66,6 +72,7 @@ def extract_topics_lda(feedbacks, n_topics=5, n_top_words=7):
             "top_words": top_words
         })
     return topics
+
 
 @app.route("/topics", methods=["POST"])
 def topics():
