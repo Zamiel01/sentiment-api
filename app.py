@@ -94,7 +94,7 @@ def urgent():
         return jsonify({"error": "feedback_text must be provided as a list of feedback strings"}), 400
 
     # Define keywords to look for in urgent feedback
-      urgent_keywords = [
+    urgent_keywords = [
         # Medical emergency
         "bleeding", "unconscious", "seizure", "stroke", "choking", "fainted", "heart attack", "cardiac", "crisis", "pain", "extreme pain", "emergency",
         
