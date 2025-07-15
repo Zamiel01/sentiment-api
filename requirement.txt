@@ -4,3 +4,4 @@ torch
 bertopic
 sentence-transformers
 gunicorn
+scikit-learn
