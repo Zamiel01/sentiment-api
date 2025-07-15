@@ -113,6 +113,4 @@ def urgent():
 
     return jsonify({"urgent_feedback": flagged_feedback, "count": len(flagged_feedback)})
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+
