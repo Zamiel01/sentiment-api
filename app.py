@@ -28,7 +28,6 @@ def predict():
     if feedbacks is None:
         return jsonify({"error": "No feedback_text provided"}), 400
 
-    # Accept either single string or list of strings
     if isinstance(feedbacks, str):
         feedbacks = [feedbacks]
     elif not isinstance(feedbacks, list):
@@ -45,17 +44,11 @@ def predict():
     else:
         return jsonify(results)
 
-# Helper: Extract topics using LDA
+# LDA topic extraction helper
 def extract_topics_lda(feedbacks, n_topics=5, n_top_words=7):
-    vectorizer = CountVectorizer(
-        stop_words='english', 
-        max_df=0.95, 
-        min_df=1,  # Allow words that appear only once
-        lowercase=True
-    )
+    vectorizer = CountVectorizer(stop_words='english', max_df=0.95, min_df=1, lowercase=True)
     dtm = vectorizer.fit_transform(feedbacks)
 
-    # Dynamically adjust topic count for small datasets
     if dtm.shape[0] < n_topics:
         n_topics = max(1, dtm.shape[0])
 
@@ -73,7 +66,6 @@ def extract_topics_lda(feedbacks, n_topics=5, n_top_words=7):
         })
     return topics
 
-
 @app.route("/topics", methods=["POST"])
 def topics():
     data = request.get_json()
@@ -89,6 +81,50 @@ def topics():
         return jsonify({"topics": topics})
     except Exception as e:
         return jsonify({"error": f"Topic extraction failed: {str(e)}"}), 500
+
+# 🔴 /urgent: Flag feedbacks containing critical issues
+@app.route("/urgent", methods=["POST"])
+def urgent():
+    data = request.get_json()
+    if data is None:
+        return jsonify({"error": "Invalid JSON"}), 400
+
+    feedbacks = data.get("feedback_text")
+    if not feedbacks or not isinstance(feedbacks, list):
+        return jsonify({"error": "feedback_text must be provided as a list of feedback strings"}), 400
+
+    # Define keywords to look for in urgent feedback
+      urgent_keywords = [
+        # Medical emergency
+        "bleeding", "unconscious", "seizure", "stroke", "choking", "fainted", "heart attack", "cardiac", "crisis", "pain", "extreme pain", "emergency",
+        
+        # Neglect or mistreatment
+        "neglect", "ignored", "rude", "disrespectful", "insulting", "unresponsive", "refused", "denied", "abandoned", "abuse", "violated", "discrimination", "mistreated",
+        
+        # Safety and hygiene issues
+        "dirty", "unclean", "infection", "contaminated", "unsafe", "hazard", "exposed", "unsanitary", "blood", "expired", "toxic", "insect", "rats", "mold",
+        
+        # Admin or critical failures
+        "lost", "mistake", "error", "wrong", "incorrect", "misdiagnosed", "delay", "waiting too long", "forgotten", "wrong patient", "wrong medicine", "switched", "misplaced", "missing record", "forgot",
+        
+        # Violence or threats
+        "threatened", "violence", "assault", "hit", "slapped", "security issue", "fight", "attacked", "abusive language", "harassment", "intimidated",
+        
+        # Legal and compliance red flags
+        "lawsuit", "legal", "court", "police", "report", "investigation", "violation", "compliance", "filed", "claim", "rights violated", "report to authorities"
+    ]
+
+
+    flagged = []
+    for feedback in feedbacks:
+        lowered = feedback.lower()
+        if any(word in lowered for word in urgent_keywords):
+            flagged.append(feedback)
+
+    return jsonify({
+        "urgent_feedback": flagged,
+        "count": len(flagged)
+    })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
