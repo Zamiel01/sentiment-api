@@ -3,3 +3,4 @@ transformers
 torch
 bertopic
 sentence-transformers
+gunicorn
